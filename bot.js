@@ -2,8 +2,7 @@ const { WebClient } = require('@slack/web-api');
 const axios = require('axios');
 
 const slack          = new WebClient(process.env.SLACK_TOKEN);
-// const channelId      = 'C06GXT5L508';
-const channelId      = 'C08PFMRB36E';
+const channelId      = 'C06GXT5L508';
 const discordWebhook = 'https://discord.com/api/webhooks/1369329871746105344/iSl1okWAQkvJ1nA2Dbh2OScuk_yjmeUdz03VTOk2yGHfzeMeTP9WNVWnZd-33ytNCADI';
 
 const REG = /New Registration:\s+(\S+)/i;
