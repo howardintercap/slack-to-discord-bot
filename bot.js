@@ -33,7 +33,7 @@ async function poll() {
 
       const domain = match[1].replace(/\*/g, '');
       await axios.post(discordWebhook, {
-        content: `${domain} was just registered!`
+        content: `\`${domain} was just registered!\``
       });
 
       console.log(`Sent to Discord: ${domain}`);
