@@ -1,41 +1,30 @@
 const { WebClient } = require('@slack/web-api');
 const axios = require('axios');
 
-const slack = new WebClient(process.env.SLACK_TOKEN);
-const channelId = 'C06GXT5L508';
-const discordWebhook = 'https://discord.com/api/webhooks/...';
+const slack       = new WebClient(process.env.SLACK_TOKEN);
+const channelId   = 'C06GXT5L508';
+const discordHook = 'https://discord.com/api/webhooks/...';
 
-const REGISTRATION_RE = /New Registration:\s+(\S+)/i;
-
-let lastTs = (Date.now() / 1000).toString();
+const REG = /New Registration:\s+(\S+)/i;
 
 async function pollSlack() {
   try {
-    const res = await slack.conversations.history({
+    // always fetch the last 100 messages
+    const { messages } = await slack.conversations.history({
       channel: channelId,
-      oldest: lastTs,
-      inclusive: false,
       limit: 100
     });
 
-    const msgs = (res.messages || [])
-      .filter(m => parseFloat(m.ts) > parseFloat(lastTs))
-      .sort((a, b) => parseFloat(a.ts) - parseFloat(b.ts));
-
-    for (const msg of msgs) {
-      const match = msg.text.match(REGISTRATION_RE);
+    for (const m of messages) {
+      const match = m.text.match(REG);
       if (!match) continue;
 
       const domain = match[1].replace(/\*/g, '');
-      await axios.post(discordWebhook, {
-        content: `${domain} was just registered!`
-      });
+      await axios.post(discordHook, { content: `${domain} was just registered!` });
       console.log('Sent to Discord:', domain);
-
-      lastTs = msg.ts;
     }
-  } catch (err) {
-    console.error('Slack error:', err.response?.data || err);
+  } catch (e) {
+    console.error('Error:', e.response?.data || e);
   }
 }
 
