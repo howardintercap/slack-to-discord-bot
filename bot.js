@@ -3,8 +3,10 @@ const axios = require('axios');
 const express = require('express');
 
 const slack = new WebClient(process.env.SLACK_TOKEN);
-const channelId = 'C06GXT5L508';
-const discordWebhook = 'https://discord.com/api/webhooks/1369389077559771249/38_jy7oK0ecX1WL6CJLNi4fqSNsOJ8hcAstEfVqJHB4LnSbrM1zL6ZAtlscsrwo4pPJq';
+// const channelId = 'C06GXT5L508';
+const channelId = 'C08PFMRB36E';
+// const discordWebhook = 'https://discord.com/api/webhooks/1369389077559771249/38_jy7oK0ecX1WL6CJLNi4fqSNsOJ8hcAstEfVqJHB4LnSbrM1zL6ZAtlscsrwo4pPJq';
+const discordWebhook = 'https://discord.com/api/webhooks/1369329871746105344/iSl1okWAQkvJ1nA2Dbh2OScuk_yjmeUdz03VTOk2yGHfzeMeTP9WNVWnZd-33ytNCADI';
 
 const REG = /New Registration:\s+[*]?([\w.-]+\.box)[*]?/i;
 let lastTs = (Date.now() / 1000).toString();
@@ -31,9 +33,18 @@ async function poll() {
       if (!match) continue;
 
       const domain = match[1].replace(/\*/g, '');
+      // await axios.post(discordWebhook, {
+      //   content: `\`${domain} was just registered!\``
+      // });
       await axios.post(discordWebhook, {
-        content: `\`${domain} was just registered!\``
+        embeds: [
+          {
+            description: `\`${domain}\` was just registered!`,
+            color: 0x00b0f4  // blue or use any hex color
+          }
+        ]
       });
+
 
       console.log(`Sent to Discord: ${domain}`);
     }
