@@ -1,13 +1,15 @@
 const { WebClient } = require('@slack/web-api');
 const axios = require('axios');
+const express = require('express');
 
-const slack          = new WebClient(process.env.SLACK_TOKEN);
-// const channelId      = 'C06GXT5L508';
-const channelId      = 'C08PFMRB36E';
+const slack = new WebClient(process.env.SLACK_TOKEN);
+const channelId = 'C08PFMRB36E';
 const discordWebhook = 'https://discord.com/api/webhooks/1369329871746105344/iSl1okWAQkvJ1nA2Dbh2OScuk_yjmeUdz03VTOk2yGHfzeMeTP9WNVWnZd-33ytNCADI';
 
-const REG = /New Registration:\s+(\S+)/i;
+const REG = /New Registration:\s+[*]?([\w.-]+\.box)[*]?/i;
 let lastTs = (Date.now() / 1000).toString();
+
+console.log('Slack-to-Discord bot started...');
 
 async function poll() {
   try {
@@ -17,12 +19,15 @@ async function poll() {
       inclusive: false,
       limit: 100
     });
+
     const newMsgs = (res.messages || [])
       .filter(m => parseFloat(m.ts) > parseFloat(lastTs))
       .sort((a, b) => parseFloat(a.ts) - parseFloat(b.ts));
 
     for (const m of newMsgs) {
+      console.log('Incoming message:', m.text);
       lastTs = m.ts;
+
       const match = m.text.match(REG);
       if (!match) continue;
 
@@ -41,9 +46,8 @@ async function poll() {
 poll();
 setInterval(poll, 60_000);
 
-const express = require('express');
+// Fake server to satisfy Render port requirement
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 app.get('/', (_, res) => res.send('Slack-to-Discord bot is running.'));
 app.listen(PORT, () => console.log(`Fake server listening on port ${PORT}`));
