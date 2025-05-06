@@ -34,11 +34,12 @@ async function poll() {
       await axios.post(discordWebhook, {
         embeds: [
           {
-            description: `\${domain}\ was just registered!`,
+            description: `${domain} was just registered!`,
             color: 0x00b0f4
           }
         ]
       });
+
 
 
       console.log(`Sent to Discord: ${domain}`);
