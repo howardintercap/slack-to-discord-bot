@@ -27,6 +27,7 @@ async function pollSlack() {
     console.log('Sent to Discord:', msg.text);
   } catch (e) {
     console.error('Error:', e.message);
+    console.error('Slack error:', e.response?.data || e);
   }
 }
 
