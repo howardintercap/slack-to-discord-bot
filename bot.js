@@ -7,7 +7,7 @@ const discordWebhook = 'https://discord.com/api/webhooks/1369329871746105344/iSl
 
 let lastTs = null;
 
-const REGISTRATION_RE = /New Registration:\s+(\S+)\s/i;
+const REGISTRATION_RE = /New Registration:\s+(\S+)/i;
 
 async function pollSlack() {
   try {
@@ -17,21 +17,22 @@ async function pollSlack() {
     });
 
     const msg = messages[0];
-    if (!msg || msg.ts === lastTs) return;       
+    if (!msg || msg.ts === lastTs) return;
+
     lastTs = msg.ts;
 
     const match = msg.text.match(REGISTRATION_RE);
     if (!match) return;
 
-    const domain = match[1]; 
+    const domain = match[1].replace(/\*/g, '');
     await axios.post(discordWebhook, {
       content: `${domain} was just registered!`,
     });
 
     console.log('Sent to Discord:', domain);
   } catch (e) {
-    console.error('Slack error detail:', e.response?.data || e);
+    console.error('Slack error:', e.response?.data || e);
   }
 }
 
-setInterval(pollSlack, 60_000); // every 60 s
+setInterval(pollSlack, 60_000);
