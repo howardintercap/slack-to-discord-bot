@@ -1,38 +1,37 @@
 const { WebClient } = require('@slack/web-api');
 const axios = require('axios');
+const express = require('express');
 
 const slack = new WebClient(process.env.SLACK_TOKEN);
 const channelId = 'C06GXT5L508';
-const discordWebhook = 'https://discord.com/api/webhooks/1369329871746105344/iSl1okWAQkvJ1nA2Dbh2OScuk_yjmeUdz03VTOk2yGHfzeMeTP9WNVWnZd-33ytNCADI';
+const app = express();
 
-let lastTs = null;
+app.use(express.json());
 
-const REGISTRATION_RE = /New Registration:\s+(\S+)/i;
-
-async function pollSlack() {
+app.post('/discord', async (req, res) => {
   try {
-    const { messages } = await slack.conversations.history({
+    const content = req.body?.content;
+    if (!content) return res.status(400).send('No content');
+
+    const match = content.match(/\*New Registration:\s*([^\*\s]+)\*/);
+    if (!match) return res.status(200).send('No registration message');
+
+    const domain = match[1];
+    const message = `${domain} was just registered!`;
+
+    await slack.chat.postMessage({
       channel: channelId,
-      limit: 1,
+      text: message,
     });
 
-    const msg = messages[0];
-    if (!msg || msg.ts === lastTs) return;
-
-    lastTs = msg.ts;
-
-    const match = msg.text.match(REGISTRATION_RE);
-    if (!match) return;
-
-    const domain = match[1].replace(/\*/g, '');
-    await axios.post(discordWebhook, {
-      content: `${domain} was just registered!`,
-    });
-
-    console.log('Sent to Discord:', domain);
-  } catch (e) {
-    console.error('Slack error:', e.response?.data || e);
+    res.status(200).send('Posted to Slack');
+  } catch (error) {
+    console.error('Error posting to Slack:', error);
+    res.status(500).send('Internal error');
   }
-}
+});
 
-setInterval(pollSlack, 60_000);
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Bot listening on port ${port}`);
+});
