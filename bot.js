@@ -1,11 +1,10 @@
 const { WebClient } = require('@slack/web-api');
-const axios = require('axios');
 const express = require('express');
 
 const slack = new WebClient(process.env.SLACK_TOKEN);
 const channelId = 'C06GXT5L508';
-const app = express();
 
+const app = express();
 app.use(express.json());
 
 app.post('/discord', async (req, res) => {
@@ -13,25 +12,20 @@ app.post('/discord', async (req, res) => {
     const content = req.body?.content;
     if (!content) return res.status(400).send('No content');
 
-    const match = content.match(/\*?New Registration:\s*([\w.-]+\.box)\*?/i);
-    if (!match) return res.status(200).send('No registration message');
+    const match = content.match(/New Registration:\s*([\w.-]+\.box)\b/i);
+    if (!match) return res.status(200).send('Not a registration message');
 
-    const domain = match[1];
-    const message = `${domain} was just registered!`;
-
+    const domain = match[1].replace(/\*$/, '');
     await slack.chat.postMessage({
       channel: channelId,
-      text: message,
+      text: `${domain} was just registered!`,
     });
 
     res.status(200).send('Posted to Slack');
-  } catch (error) {
-    console.error('Error posting to Slack:', error);
-    res.status(500).send('Internal error');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
   }
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Bot listening on port ${port}`);
-});
+app.listen(3000, () => console.log('Listening on :3000'));
