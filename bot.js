@@ -3,10 +3,8 @@ const axios = require('axios');
 const express = require('express');
 
 const slack = new WebClient(process.env.SLACK_TOKEN);
-// const channelId = 'C06GXT5L508';
-// const discordWebhook = 'https://discord.com/api/webhooks/1369389077559771249/38_jy7oK0ecX1WL6CJLNi4fqSNsOJ8hcAstEfVqJHB4LnSbrM1zL6ZAtlscsrwo4pPJq';
-const channelId = 'C08PFMRB36E';
-const discordWebhook = 'https://discord.com/api/webhooks/1369329871746105344/iSl1okWAQkvJ1nA2Dbh2OScuk_yjmeUdz03VTOk2yGHfzeMeTP9WNVWnZd-33ytNCADI';
+const channelId = 'C06GXT5L508';
+const discordWebhook = 'https://discord.com/api/webhooks/1369389077559771249/38_jy7oK0ecX1WL6CJLNi4fqSNsOJ8hcAstEfVqJHB4LnSbrM1zL6ZAtlscsrwo4pPJq';
 
 const REG = /New Registration:\s+[*]?([\w.-]+\.box)[*]?/i;
 let lastTs = (Date.now() / 1000).toString();
