@@ -13,7 +13,7 @@ app.post('/discord', async (req, res) => {
     const content = req.body?.content;
     if (!content) return res.status(400).send('No content');
 
-    const match = content.match(/\*New Registration:\s*([^\*\s]+)\*/);
+    const match = content.match(/\*?New Registration:\s*([\w.-]+\.box)\*?/i);
     if (!match) return res.status(200).send('No registration message');
 
     const domain = match[1];
