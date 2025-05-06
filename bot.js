@@ -3,7 +3,7 @@ const axios = require('axios');
 const express = require('express');
 
 const slack = new WebClient(process.env.SLACK_TOKEN);
-const channelId = 'C08PFMRB36E';
+const channelId = 'C06GXT5L508';
 const discordWebhook = 'https://discord.com/api/webhooks/1369329871746105344/iSl1okWAQkvJ1nA2Dbh2OScuk_yjmeUdz03VTOk2yGHfzeMeTP9WNVWnZd-33ytNCADI';
 
 const REG = /New Registration:\s+[*]?([\w.-]+\.box)[*]?/i;
@@ -25,7 +25,6 @@ async function poll() {
       .sort((a, b) => parseFloat(a.ts) - parseFloat(b.ts));
 
     for (const m of newMsgs) {
-      console.log('Incoming message:', m.text);
       lastTs = m.ts;
 
       const match = m.text.match(REG);
