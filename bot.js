@@ -1,61 +1,69 @@
 const { WebClient } = require('@slack/web-api');
-const axios = require('axios');
+const axios  = require('axios');
+const fs     = require('fs');
 const express = require('express');
 
-const slack = new WebClient(process.env.SLACK_TOKEN);
+const slack   = new WebClient(process.env.SLACK_TOKEN);
 // const channelId = 'C06GXT5L508';
 // const discordWebhook = 'https://discord.com/api/webhooks/1369389077559771249/38_jy7oK0ecX1WL6CJLNi4fqSNsOJ8hcAstEfVqJHB4LnSbrM1zL6ZAtlscsrwo4pPJq';
 const channelId = 'C08PFMRB36E';
 const discordWebhook = 'https://discord.com/api/webhooks/1369329871746105344/iSl1okWAQkvJ1nA2Dbh2OScuk_yjmeUdz03VTOk2yGHfzeMeTP9WNVWnZd-33ytNCADI';
 
-const REG = /New Registration:\s+[*]?([\w.-]+\.box)[*]?/i;
-let lastTs = (Date.now() / 1000).toString();
+const REG = /New Registration:\s+\*?([\w.-]+\.box)\*?/i;
+const STATE_FILE = './last_ts.json';
 
-console.log('Slack-to-Discord bot started...');
+function loadTs() {
+  try { return JSON.parse(fs.readFileSync(STATE_FILE)).lastTs; }
+  catch { return 0; }
+}
+function saveTs(ts) {
+  fs.writeFileSync(STATE_FILE, JSON.stringify({ lastTs: ts }));
+}
+
+let lastTs = loadTs();
+console.log(`Slack-to-Discord bot started (resuming from ts=${lastTs})…`);
 
 async function poll() {
   try {
-    const res = await slack.conversations.history({
-      channel: channelId,
-      oldest: lastTs,
-      inclusive: false,
-      limit: 100
-    });
-
-    const newMsgs = (res.messages || [])
-      .filter(m => parseFloat(m.ts) > parseFloat(lastTs))
-      .sort((a, b) => parseFloat(a.ts) - parseFloat(b.ts));
-
-    for (const m of newMsgs) {
-      lastTs = m.ts;
-
-      const match = m.text.match(REG);
-      if (!match) continue;
-
-      const domain = match[1].replace(/\*/g, '');
-      await axios.post(discordWebhook, {
-        embeds: [
-          {
-            description: `${domain} was just registered!`,
-            color: 0xffffff
-          }
-        ]
+    let cursor;
+    do {
+      const res = await slack.conversations.history({
+        channel: channelId,
+        oldest: lastTs,
+        limit: 200,
+        cursor,
+        inclusive: false,
       });
 
+      const messages = res.messages
+        .filter(m => parseFloat(m.ts) > parseFloat(lastTs))
+        .sort((a, b) => a.ts - b.ts);
 
+      for (const m of messages) {
+        const match = m.text.match(REG);
+        if (!match) continue;
 
-      console.log(`Sent to Discord: ${domain}`);
-    }
+        const domain = match[1];
+        await axios.post(discordWebhook, {
+          embeds: [{ description: `${domain} was just registered!`, color: 0xffffff }],
+        });
+        console.log(`Sent to Discord: ${domain}`);
+
+        lastTs = m.ts;
+      }
+      cursor = res.response_metadata?.next_cursor;
+    } while (cursor);
+
+    saveTs(lastTs);
   } catch (err) {
-    console.error('Error:', err.response?.data || err);
+    console.error('poll error:', err.response?.data || err);
   }
 }
 
 poll();
 setInterval(poll, 60_000);
 
-// Fake server to satisfy Render port requirement
 const app = express();
-const PORT = process.env.PORT || 3000;
 app.get('/', (_, res) => res.send('Slack-to-Discord bot is running.'));
-app.listen(PORT, () => console.log(`Fake server listening on port ${PORT}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`HTTP server on ${PORT}`));
